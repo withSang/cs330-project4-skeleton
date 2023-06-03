@@ -16,9 +16,13 @@
 package com.example.pj4test.fragment
 
 import android.annotation.SuppressLint
+import android.content.Context
 import android.content.res.Configuration
 import android.graphics.Bitmap
 import android.os.Bundle
+import android.os.CombinedVibration
+import android.os.VibrationEffect
+import android.os.VibratorManager
 import android.util.Log
 import android.view.LayoutInflater
 import android.view.View
@@ -68,6 +72,8 @@ class CameraFragment : Fragment(), PersonClassifier.DetectorListener {
     /** Blocking camera operations are performed using this executor */
     private lateinit var cameraExecutor: ExecutorService
 
+    private lateinit var vibrator: VibratorManager
+
     override fun onDestroyView() {
         _fragmentCameraBinding = null
         super.onDestroyView()
@@ -82,6 +88,8 @@ class CameraFragment : Fragment(), PersonClassifier.DetectorListener {
         savedInstanceState: Bundle?
     ): View {
         _fragmentCameraBinding = FragmentCameraBinding.inflate(inflater, container, false)
+
+        vibrator = context?.getSystemService(Context.VIBRATOR_MANAGER_SERVICE) as VibratorManager
 
         return fragmentCameraBinding.root
     }
@@ -129,8 +137,10 @@ class CameraFragment : Fragment(), PersonClassifier.DetectorListener {
     private fun bindCameraUseCases(cameraProvider: ProcessCameraProvider) {
 
         // CameraSelector - makes assumption that we're only using the back camera
+//        val cameraSelector =
+//            CameraSelector.Builder().requireLensFacing(CameraSelector.LENS_FACING_BACK).build()
         val cameraSelector =
-            CameraSelector.Builder().requireLensFacing(CameraSelector.LENS_FACING_BACK).build()
+            CameraSelector.Builder().requireLensFacing(CameraSelector.LENS_FACING_FRONT).build()
 
         // Preview. Only using the 4:3 ratio because this is the closest to our models
         preview =
@@ -193,6 +203,24 @@ class CameraFragment : Fragment(), PersonClassifier.DetectorListener {
         personClassifier.detect(bitmapBuffer, imageRotation)
     }
 
+    private fun tryWarnUser() {
+        val detectedTime = Date()
+        val fiveSecondsInMilli = 5 * 1000
+        if ((detectedTime.time - viewModel.getLastDetectedTime().time) > fiveSecondsInMilli){
+            // 토스트 띄움
+            Toast.makeText(requireContext(), "코골며 자는 사람 있음", Toast.LENGTH_SHORT).show()
+
+            // 1초동안 휴대폰 진동시킴
+            val timings = longArrayOf(116, 216, 116, 216, 116, 216, 116, 216, 116, 216, 116, 216)
+            val amplitudes = intArrayOf(0, 200, 0, 200, 0, 200, 0, 200, 0, 200, 0, 200)
+            val vibrationEffect = VibrationEffect.createWaveform(timings, amplitudes, -1)
+            val combinedVibration = CombinedVibration.createParallel(vibrationEffect)
+            vibrator.vibrate(combinedVibration)
+
+            viewModel.setLastDetectedTime(detectedTime)
+        }
+    }
+
     // Update UI after objects have been detected. Extracts original image height/width
     // to scale and place bounding boxes properly through OverlayView
     override fun onObjectDetectionResults(
@@ -217,19 +245,15 @@ class CameraFragment : Fragment(), PersonClassifier.DetectorListener {
 
             // change UI according to the result
             if (isPersonDetected) {
-                personView.text = "PERSON"
+                personView.text = "사람이 있음"
                 personView.setBackgroundColor(ProjectConfiguration.activeBackgroundColor)
                 personView.setTextColor(ProjectConfiguration.activeTextColor)
                 if (viewModel.getIsSnoringDetected()) {
                     // 두 모델의 결과가 모두 detected인 경우
-                    val detectedTime = Date()
-                    if ((detectedTime.time - viewModel.getLastDetectedTime().time) > 5 * 1000){
-                        Toast.makeText(requireContext(), "코골며 자는 사람 있음", Toast.LENGTH_SHORT).show()
-                        viewModel.setLastDetectedTime(detectedTime);
-                    }
+                    tryWarnUser();
                 }
             } else {
-                personView.text = "NO PERSON"
+                personView.text = "사람이 없음"
                 personView.setBackgroundColor(ProjectConfiguration.idleBackgroundColor)
                 personView.setTextColor(ProjectConfiguration.idleTextColor)
             }
