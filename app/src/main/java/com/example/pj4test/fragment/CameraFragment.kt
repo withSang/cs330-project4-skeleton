@@ -35,13 +35,16 @@ import androidx.camera.core.Preview
 import androidx.camera.lifecycle.ProcessCameraProvider
 import androidx.core.content.ContextCompat
 import androidx.fragment.app.Fragment
+import androidx.lifecycle.ViewModelProvider
 import com.example.pj4test.ProjectConfiguration
 import java.util.LinkedList
 import java.util.concurrent.ExecutorService
 import java.util.concurrent.Executors
 import com.example.pj4test.cameraInference.PersonClassifier
+import com.example.pj4test.data.ResultViewModel
 import com.example.pj4test.databinding.FragmentCameraBinding
 import org.tensorflow.lite.task.vision.detector.Detection
+import java.util.Date
 
 class CameraFragment : Fragment(), PersonClassifier.DetectorListener {
     private val TAG = "CameraFragment"
@@ -58,6 +61,9 @@ class CameraFragment : Fragment(), PersonClassifier.DetectorListener {
     private var preview: Preview? = null
     private var imageAnalyzer: ImageAnalysis? = null
     private var camera: Camera? = null
+
+    // ViewModel for inter-fragment communication
+    private lateinit var viewModel: ResultViewModel
 
     /** Blocking camera operations are performed using this executor */
     private lateinit var cameraExecutor: ExecutorService
@@ -98,6 +104,9 @@ class CameraFragment : Fragment(), PersonClassifier.DetectorListener {
         }
 
         personView = fragmentCameraBinding.PersonView
+
+        // viewModel을 초기화한다
+        viewModel = ViewModelProvider(requireActivity()).get(ResultViewModel::class.java)
     }
 
     // Initialize CameraX, and prepare to bind the camera use cases
@@ -202,12 +211,23 @@ class CameraFragment : Fragment(), PersonClassifier.DetectorListener {
             
             // find at least one bounding box of the person
             val isPersonDetected: Boolean = results!!.find { it.categories[0].label == "person" } != null
-            
+
+            // put isPersonDetected value into the viewModel
+            viewModel.setIsPersonDetected(isPersonDetected)
+
             // change UI according to the result
             if (isPersonDetected) {
                 personView.text = "PERSON"
                 personView.setBackgroundColor(ProjectConfiguration.activeBackgroundColor)
                 personView.setTextColor(ProjectConfiguration.activeTextColor)
+                if (viewModel.getIsSnoringDetected()) {
+                    // 두 모델의 결과가 모두 detected인 경우
+                    val detectedTime = Date()
+                    if ((detectedTime.time - viewModel.getLastDetectedTime().time) > 5 * 1000){
+                        Toast.makeText(requireContext(), "코골며 자는 사람 있음", Toast.LENGTH_SHORT).show()
+                        viewModel.setLastDetectedTime(detectedTime);
+                    }
+                }
             } else {
                 personView.text = "NO PERSON"
                 personView.setBackgroundColor(ProjectConfiguration.idleBackgroundColor)

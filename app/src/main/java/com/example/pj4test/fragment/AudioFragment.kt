@@ -6,15 +6,16 @@ import android.view.View
 import android.view.ViewGroup
 import android.widget.TextView
 import androidx.fragment.app.Fragment
+import androidx.lifecycle.ViewModelProvider
 import com.example.pj4test.ProjectConfiguration
 import com.example.pj4test.audioInference.SnapClassifier
+import com.example.pj4test.data.ResultViewModel
 import com.example.pj4test.databinding.FragmentAudioBinding
 
 class AudioFragment: Fragment(), SnapClassifier.DetectorListener {
     private val TAG = "AudioFragment"
 
     private var _fragmentAudioBinding: FragmentAudioBinding? = null
-
     private val fragmentAudioBinding
         get() = _fragmentAudioBinding!!
 
@@ -24,11 +25,16 @@ class AudioFragment: Fragment(), SnapClassifier.DetectorListener {
     // views
     lateinit var snapView: TextView
 
+    // viewModels
+    lateinit private var viewModel: ResultViewModel
+
     override fun onCreateView(
         inflater: LayoutInflater,
         container: ViewGroup?,
         savedInstanceState: Bundle?
     ): View {
+        viewModel = ViewModelProvider(requireActivity()).get(ResultViewModel::class.java)
+
         _fragmentAudioBinding = FragmentAudioBinding.inflate(inflater, container, false)
 
         return fragmentAudioBinding.root
@@ -56,7 +62,9 @@ class AudioFragment: Fragment(), SnapClassifier.DetectorListener {
 
     override fun onResults(score: Float) {
         activity?.runOnUiThread {
-            if (score > SnapClassifier.THRESHOLD) {
+            val isSnoringDetected = score > SnapClassifier.THRESHOLD
+            viewModel.setIsSnoringDetected(isSnoringDetected)
+            if (isSnoringDetected) {
                 snapView.text = "누군가 코 골고 있음"
                 snapView.setBackgroundColor(ProjectConfiguration.activeBackgroundColor)
                 snapView.setTextColor(ProjectConfiguration.activeTextColor)
