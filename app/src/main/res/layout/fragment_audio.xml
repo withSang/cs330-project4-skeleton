@@ -10,7 +10,7 @@
         android:layout_height="60dp"
         android:background="@color/white"
         android:gravity="center"
-        android:text="코 고는 사람 없음"
+        android:text=""
         android:textColor="@color/black"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent"

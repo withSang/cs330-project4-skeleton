@@ -22,9 +22,6 @@ class AudioFragment: Fragment(), SnapClassifier.DetectorListener {
     // classifiers
     lateinit var snapClassifier: SnapClassifier
 
-    // views
-    lateinit var snapView: TextView
-
     // viewModels
     lateinit private var viewModel: ResultViewModel
 
@@ -42,9 +39,6 @@ class AudioFragment: Fragment(), SnapClassifier.DetectorListener {
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
-
-        snapView = fragmentAudioBinding.SnapView
-
         snapClassifier = SnapClassifier()
         snapClassifier.initialize(requireContext())
         snapClassifier.setDetectorListener(this)
@@ -64,15 +58,6 @@ class AudioFragment: Fragment(), SnapClassifier.DetectorListener {
         activity?.runOnUiThread {
             val isSnoringDetected = score > SnapClassifier.THRESHOLD
             viewModel.setIsSnoringDetected(isSnoringDetected)
-            if (isSnoringDetected) {
-                snapView.text = "누군가 코 골고 있음"
-                snapView.setBackgroundColor(ProjectConfiguration.activeBackgroundColor)
-                snapView.setTextColor(ProjectConfiguration.activeTextColor)
-            } else {
-                snapView.text = "코 고는 사람 없음"
-                snapView.setBackgroundColor(ProjectConfiguration.idleBackgroundColor)
-                snapView.setTextColor(ProjectConfiguration.idleTextColor)
-            }
         }
     }
 }

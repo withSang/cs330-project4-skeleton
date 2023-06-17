@@ -57,9 +57,8 @@ class CameraFragment : Fragment(), PersonClassifier.DetectorListener {
 
     private val fragmentCameraBinding
         get() = _fragmentCameraBinding!!
-    
+
     private lateinit var personView: TextView
-    
     private lateinit var personClassifier: PersonClassifier
     private lateinit var bitmapBuffer: Bitmap
     private var preview: Preview? = null
@@ -205,18 +204,14 @@ class CameraFragment : Fragment(), PersonClassifier.DetectorListener {
 
     private fun tryWarnUser() {
         val detectedTime = Date()
-        val fiveSecondsInMilli = 5 * 1000
+        val fiveSecondsInMilli = 2 * 1000
         if ((detectedTime.time - viewModel.getLastDetectedTime().time) > fiveSecondsInMilli){
-            // 토스트 띄움
-            Toast.makeText(requireContext(), "코골며 자는 사람 있음", Toast.LENGTH_SHORT).show()
-
             // 1초동안 휴대폰 진동시킴
             val timings = longArrayOf(116, 216, 116, 216, 116, 216, 116, 216, 116, 216, 116, 216)
             val amplitudes = intArrayOf(0, 200, 0, 200, 0, 200, 0, 200, 0, 200, 0, 200)
             val vibrationEffect = VibrationEffect.createWaveform(timings, amplitudes, -1)
             val combinedVibration = CombinedVibration.createParallel(vibrationEffect)
             vibrator.vibrate(combinedVibration)
-
             viewModel.setLastDetectedTime(detectedTime)
         }
     }
@@ -244,16 +239,15 @@ class CameraFragment : Fragment(), PersonClassifier.DetectorListener {
             viewModel.setIsPersonDetected(isPersonDetected)
 
             // change UI according to the result
-            if (isPersonDetected) {
-                personView.text = "사람이 있음"
+            if (isPersonDetected && viewModel.getIsSnoringDetected()) {
+                // 두 모델의 결과가 모두 detected인 경우
+                personView.text = "코골며 자는 사람 있음"
                 personView.setBackgroundColor(ProjectConfiguration.activeBackgroundColor)
                 personView.setTextColor(ProjectConfiguration.activeTextColor)
-                if (viewModel.getIsSnoringDetected()) {
-                    // 두 모델의 결과가 모두 detected인 경우
-                    tryWarnUser();
-                }
-            } else {
-                personView.text = "사람이 없음"
+                tryWarnUser();
+            }
+            else {
+                personView.text = ""
                 personView.setBackgroundColor(ProjectConfiguration.idleBackgroundColor)
                 personView.setTextColor(ProjectConfiguration.idleTextColor)
             }
