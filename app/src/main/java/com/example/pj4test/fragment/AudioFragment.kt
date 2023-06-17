@@ -12,7 +12,7 @@ import com.example.pj4test.audioInference.SnapClassifier
 import com.example.pj4test.data.ResultViewModel
 import com.example.pj4test.databinding.FragmentAudioBinding
 
-class AudioFragment: Fragment(), SnapClassifier.DetectorListener {
+public class AudioFragment: Fragment(), SnapClassifier.DetectorListener, ResultViewModel.AudioFragment {
     private val TAG = "AudioFragment"
 
     private var _fragmentAudioBinding: FragmentAudioBinding? = null
@@ -31,6 +31,7 @@ class AudioFragment: Fragment(), SnapClassifier.DetectorListener {
         savedInstanceState: Bundle?
     ): View {
         viewModel = ViewModelProvider(requireActivity()).get(ResultViewModel::class.java)
+        viewModel.initializeAudioFragment(this);
 
         _fragmentAudioBinding = FragmentAudioBinding.inflate(inflater, container, false)
 
@@ -46,12 +47,17 @@ class AudioFragment: Fragment(), SnapClassifier.DetectorListener {
 
     override fun onPause() {
         super.onPause()
+        viewModel.setIsSnoringDetected(false);
         snapClassifier.stopInferencing()
     }
 
     override fun onResume() {
         super.onResume()
         snapClassifier.startInferencing()
+    }
+
+    override fun getIsRunning() : Boolean {
+        return snapClassifier.getIsRunningInferencing()
     }
 
     override fun onResults(score: Float) {

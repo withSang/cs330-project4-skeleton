@@ -7,28 +7,49 @@ class ResultViewModel : ViewModel() {
     private var isPersonDetected = false
     private var isSnoringDetected = false
     private var lastDetectedTime = Date(0);
+    private var audioFragment: AudioFragment? = null
 
-    public fun getIsPersonDetected(): Boolean {
+    interface AudioFragment {
+        fun getIsRunning(): Boolean
+        fun onResume()
+        fun onPause()
+    }
+
+    fun initializeAudioFragment(_audioFragment: AudioFragment) {
+        audioFragment = _audioFragment
+    }
+
+    fun getIsPersonDetected(): Boolean {
         return isPersonDetected
     }
 
-    public fun setIsPersonDetected(detected: Boolean) {
+    fun setIsPersonDetected(detected: Boolean) {
         isPersonDetected = detected
+        if (isPersonDetected) {
+            if (audioFragment != null && !audioFragment!!.getIsRunning()) {
+                audioFragment!!.onResume();
+            }
+        }
+        else {
+            if (audioFragment != null && audioFragment!!.getIsRunning()) {
+                audioFragment!!.onPause();
+            }
+        }
     }
 
-    public fun getIsSnoringDetected(): Boolean {
+    fun getIsSnoringDetected(): Boolean {
         return isSnoringDetected
     }
 
-    public fun setIsSnoringDetected(detected: Boolean) {
+    fun setIsSnoringDetected(detected: Boolean) {
         isSnoringDetected = detected
     }
 
-    public fun getLastDetectedTime(): Date {
+    fun getLastDetectedTime(): Date {
         return lastDetectedTime
     }
 
-    public fun setLastDetectedTime(lastTime: Date) {
+    fun setLastDetectedTime(lastTime: Date) {
         lastDetectedTime = lastTime
     }
 }

@@ -136,8 +136,6 @@ class CameraFragment : Fragment(), PersonClassifier.DetectorListener {
     private fun bindCameraUseCases(cameraProvider: ProcessCameraProvider) {
 
         // CameraSelector - makes assumption that we're only using the back camera
-//        val cameraSelector =
-//            CameraSelector.Builder().requireLensFacing(CameraSelector.LENS_FACING_BACK).build()
         val cameraSelector =
             CameraSelector.Builder().requireLensFacing(CameraSelector.LENS_FACING_FRONT).build()
 
@@ -239,7 +237,7 @@ class CameraFragment : Fragment(), PersonClassifier.DetectorListener {
             viewModel.setIsPersonDetected(isPersonDetected)
 
             // change UI according to the result
-            if (isPersonDetected && viewModel.getIsSnoringDetected()) {
+            if (viewModel.getIsPersonDetected() && viewModel.getIsSnoringDetected()) {
                 // 두 모델의 결과가 모두 detected인 경우
                 personView.text = "코골며 자는 사람 있음"
                 personView.setBackgroundColor(ProjectConfiguration.activeBackgroundColor)

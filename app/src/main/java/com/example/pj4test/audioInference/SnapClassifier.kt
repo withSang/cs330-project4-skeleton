@@ -116,6 +116,10 @@ class SnapClassifier {
         task = null
     }
 
+    fun getIsRunningInferencing() : Boolean {
+        return task != null;
+    }
+
     /**
      * interface DetectorListener
      *
