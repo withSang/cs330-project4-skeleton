@@ -182,7 +182,12 @@ class CameraFragment : Fragment(), PersonClassifier.DetectorListener {
         imageAnalyzer?.targetRotation = fragmentCameraBinding.viewFinder.display.rotation
     }
 
+    private var detectObjectsLastTime: Date? = null;
+
     private fun detectObjects(image: ImageProxy) {
+        val detectedTime = Date()
+        val oneSecondsInMilli = 1 * 1000
+
         if (!::bitmapBuffer.isInitialized) {
             // The image rotation and RGB image buffer are initialized only once
             // the analyzer has started running
@@ -196,14 +201,19 @@ class CameraFragment : Fragment(), PersonClassifier.DetectorListener {
         image.use { bitmapBuffer.copyPixelsFromBuffer(image.planes[0].buffer) }
         val imageRotation = image.imageInfo.rotationDegrees
 
+        // use classifier model, for 1 sec
+        if (detectObjectsLastTime == null) detectObjectsLastTime = detectedTime;
+        if ((detectedTime.time - detectObjectsLastTime!!.time) < oneSecondsInMilli) return;
+        detectObjectsLastTime = detectedTime;
+
         // Pass Bitmap and rotation to the object detector helper for processing and detection
         personClassifier.detect(bitmapBuffer, imageRotation)
     }
 
     private fun tryWarnUser() {
         val detectedTime = Date()
-        val fiveSecondsInMilli = 2 * 1000
-        if ((detectedTime.time - viewModel.getLastDetectedTime().time) > fiveSecondsInMilli){
+        val twoSecondsInMilli = 2 * 1000
+        if ((detectedTime.time - viewModel.getLastDetectedTime().time) > twoSecondsInMilli){
             // 1초동안 휴대폰 진동시킴
             val timings = longArrayOf(116, 216, 116, 216, 116, 216, 116, 216, 116, 216, 116, 216)
             val amplitudes = intArrayOf(0, 200, 0, 200, 0, 200, 0, 200, 0, 200, 0, 200)
